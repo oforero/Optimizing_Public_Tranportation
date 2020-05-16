@@ -59,8 +59,7 @@ class Station(Producer):
 
     def run(self, train, direction, prev_station_id, prev_direction):
         """Simulates train arrivals at this station"""
-
-        logger.info("arrival kafka integration incomplete - skipping")
+        
         new_arrival = Arrival(
             station_id=self.station_id, 
             train_id=train.train_id, 
