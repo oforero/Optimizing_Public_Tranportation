@@ -6,13 +6,13 @@ from confluent_kafka import avro
 
 from models.producer import Producer
 from models.turnstile_hardware import TurnstileHardware
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, field
 
 
 logger = logging.getLogger(__name__)
 
 @dataclass
-class Turnstile:
+class TurnstileEvent:
     station_id: int = 0
     station_name: str = ""
     line: str = ""
@@ -50,9 +50,8 @@ class Turnstile(Producer):
     def run(self, timestamp, time_step):
         """Simulates riders entering through the turnstile."""
         num_entries = self.turnstile_hardware.get_entries(timestamp, time_step)
-        logger.info("turnstile kafka integration incomplete - skipping")
         for _ in range(num_entries):
-            value = asdict(Turnstile(
+            value = asdict(TurnstileEvent(
                 station_id=self.station.station_id,
                 station_name=self.station.name,
                 line=self.station.color.name
