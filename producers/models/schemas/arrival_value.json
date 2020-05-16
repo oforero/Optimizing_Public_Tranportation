@@ -1,3 +1,14 @@
 {
-  "TODO": "Complete this Schema! (Make sure to delete this Key/Value Pair!"
+  "namespace": "udacity.oforero.datastreaming.project1",
+  "name": "Arrival",
+  "type": "record",
+  "fields": [
+    {"name": "station_id", "type": "int"},
+    {"name": "train_id", "type": "string"},
+    {"name": "direction", "type": "string"},
+    {"name": "line", "type": "string"},
+    {"name": "train_status", "type": "string"},
+    {"name": "prev_station_id", "type": ["null","int"], "_comment": "Using null to symbolize a train starting at a terminus"},
+    {"name": "prev_direction", "type": ["null", "string"], "_comment": "Using null to symbolize a train starting"}
+  ]
 }
