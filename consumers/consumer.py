@@ -17,14 +17,12 @@ class KafkaConsumer:
     """Defines the base kafka consumer class"""
     BROKERS_URL = "PLAINTEXT://localhost:9092,PLAINTEXT://localhost:9093,PLAINTEXT://localhost:9094"
     SCHEMA_REGISTRY_URL = "http://127.0.0.1:8081"
-    # schema_registry = CachedSchemaRegistryClient(SCHEMA_REGISTRY_URL)
-    logger.info(f"KafkaConsumer static initialization {schema_registry}")
 
     def __init__(
         self,
-        topics: List[str],
         message_handler,
         group_id, 
+        topics: List[str]=None,
         topic_name_pattern: Optional[str]=None,
         is_avro=True,
         offset_earliest=False,
@@ -32,6 +30,11 @@ class KafkaConsumer:
         consume_timeout=0.1,
     ):
         """Creates a consumer object for asynchronous use"""
+        if topic_name_pattern is None and (topics is None or len(topics) == 0):
+            raise ValueError("Either topics or topic_name_pattern should be passed")
+        if topic_name_pattern is not None and (topics is not None or len(topics) != 0):
+            raise ValueError("Only one of topics or topic_name_pattern should be passed")
+
         self.topic_name_pattern = topic_name_pattern
         self.message_handler = message_handler
         self.sleep_secs = sleep_secs
@@ -53,10 +56,12 @@ class KafkaConsumer:
         else:
             self.consumer = Consumer(self.broker_properties)
 
-        if topic_name_pattern is None:
+        if topic_name_pattern is not None:
             self.consumer.subscribe(pattern=topic_name_pattern, on_assign=self.on_assign)
-        else:
+        
+        if topics is not None:
             self.consumer.subscribe(topics=topics, on_assign=self.on_assign)    
+        
         logger.info("Initialized consumer for topic: %s\nProperites: %s", topic_name_pattern, self.broker_properties)
 
     def on_assign(self, consumer, partitions):
