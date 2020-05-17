@@ -41,25 +41,22 @@ table = app.Table(
    changelog_topic=out_topic,
 )
 
-
-def stationColorAsStr(station):
-        if station.red:
-            line = "red"
-        elif station.blue:
-            line = "blue"
-        elif station.green:
-            line = "green"
-        else:
-            line = None
-
-
-#
 #
 # Using Faust, transform input `Station` records into `TransformedStation` records. Note that
 # "line" is the color of the station. So if the `Station` record has the field `red` set to true,
 # then you would set the `line` of the `TransformedStation` record to the string `"red"`
 #
 #
+def stationColorAsStr(station):
+    if station.red:
+        line = "red"
+    elif station.blue:
+        line = "blue"
+    elif station.green:
+        line = "green"
+    else:
+        line = None
+
 @app.agent(topic)
 async def process_stations(stations):
     async for station in stations:
