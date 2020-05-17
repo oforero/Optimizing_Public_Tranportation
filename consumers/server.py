@@ -28,6 +28,7 @@ class MainHandler(tornado.web.RequestHandler):
 
     def initialize(self, weather, lines):
         """Initializes the handler with required configuration"""
+        logger.info("Initializing MainHandler")
         self.weather = weather
         self.lines = lines
 
@@ -63,23 +64,27 @@ def run_server():
     # Build kafka consumers
     consumers = [
         KafkaConsumer(
-            weather_model.process_message,
+            message_handler=weather_model.process_message,
+            group_id="weather_consumers",
             offset_earliest=True,
             topics=["org.chicago.cta.weather.v1"],
         ),
         KafkaConsumer(
-            lines.process_message,
+            message_handler=lines.process_message,
+            group_id="stations_consumers",
             topics=["org.chicago.cta.stations.table.v1"],
             offset_earliest=True,
             is_avro=False,
         ),
         KafkaConsumer(
-            lines.process_message,
+            message_handler=lines.process_message,
+            group_id="arrivals_consumers",
             topics_name_pattern="^org.chicago.cta.station.arrivals.",
             offset_earliest=True,
         ),
         KafkaConsumer(
-            lines.process_message,
+            message_handler=lines.process_message,
+            group_id="summary_consumer",
             topics=["TURNSTILE_SUMMARY"],
             offset_earliest=True,
             is_avro=False,
