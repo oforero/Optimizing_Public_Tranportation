@@ -24,12 +24,14 @@ class Line:
 
     def _handle_station(self, value):
         """Adds the station to this Line's data model"""
+        logger.info("Handling station message: %s",value)
         if value["line"] != self.color:
             return
         self.stations[value["station_id"]] = Station.from_message(value)
 
     def _handle_arrival(self, message):
         """Updates train locations"""
+        logger.info("Handling arrival message: %s", message.value())
         value = message.value()
         prev_station_id = value.get("prev_station_id")
         prev_dir = value.get("prev_direction")
@@ -56,17 +58,17 @@ class Line:
     def process_message(self, message):
         """Given a kafka message, extract data"""
         # Based on the message topic, call the appropriate handler.
-        if message.topic() == "transformed_stations": 
+        if "org.chicago.cta.stations.table.v1" == message.topic(): 
             # Handle the stations Faust Table
             try:
                 value = json.loads(message.value())
                 self._handle_station(value)
             except Exception as e:
                 logger.fatal("bad station? %s, %s", value, e)
-        elif message.topic() == "station_arrival_data": 
+        elif ".arrivals." in message.topic(): 
             # Handle the arrival topic
             self._handle_arrival(message)
-        elif message.topic() == "turnstile_summary": 
+        elif "TURNSTILE_SUMMARY" == message.topic(): 
             # Handle KSQL Turnstile Summary Topic
             json_data = json.loads(message.value())
             station_id = json_data.get("STATION_ID")
