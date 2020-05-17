@@ -22,20 +22,19 @@ class KafkaConsumer:
         self,
         message_handler,
         group_id, 
-        topics: List[str]=None,
-        topic_name_pattern: Optional[str]=None,
+        topics: List[str] = None,
+        topics_name_pattern: Optional[str] = None,
         is_avro=True,
         offset_earliest=False,
         sleep_secs=1.0,
         consume_timeout=0.1,
     ):
         """Creates a consumer object for asynchronous use"""
-        if topic_name_pattern is None and (topics is None or len(topics) == 0):
+        if topics_name_pattern is None and (topics is None or len(topics) == 0):
             raise ValueError("Either topics or topic_name_pattern should be passed")
-        if topic_name_pattern is not None and (topics is not None or len(topics) != 0):
+        if topics_name_pattern is not None and (topics is not None and len(topics) != 0):
             raise ValueError("Only one of topics or topic_name_pattern should be passed")
 
-        self.topic_name_pattern = topic_name_pattern
         self.message_handler = message_handler
         self.sleep_secs = sleep_secs
         self.consume_timeout = consume_timeout
@@ -56,13 +55,16 @@ class KafkaConsumer:
         else:
             self.consumer = Consumer(self.broker_properties)
 
-        if topic_name_pattern is not None:
-            self.consumer.subscribe(pattern=topic_name_pattern, on_assign=self.on_assign)
-        
+        if topics_name_pattern is not None:
+            # This version of the Kafka client do not use separate parameters for patterns
+            self.consumer.subscribe(topics=[topics_name_pattern], on_assign=self.on_assign)
+            self.topics=[topics_name_pattern]
+
         if topics is not None:
-            self.consumer.subscribe(topics=topics, on_assign=self.on_assign)    
+            self.consumer.subscribe(topics=topics, on_assign=self.on_assign) 
+            self.topics=topics   
         
-        logger.info("Initialized consumer for topic: %s\nProperites: %s", topic_name_pattern, self.broker_properties)
+        logger.info("Initialized consumer for topic: %s\nProperites: %s", self.topics, self.broker_properties)
 
     def on_assign(self, consumer, partitions):
         """Callback for when topic assignment takes place"""
@@ -72,7 +74,7 @@ class KafkaConsumer:
             for partition in partitions:
                 partition.offset = OFFSET_BEGINNING
         consumer.assign(partitions)
-        logger.info("partitions assigned for %s", self.topic_name_pattern)
+        logger.info("partitions assigned for %s", self.topics)
 
     async def consume(self):
         """Asynchronously consumes data from kafka topic"""
@@ -95,8 +97,12 @@ class KafkaConsumer:
             else:
                 self.message_handler(message)
                 return 1
+        except SerializerError as er:
+            logger.error("Deserialization error on topic (%s): %s", self.topics, er)        
+            return 0
+
         except Exception as ex:
-            logger.error("Unhandled exception: %s", ex)
+            logger.error("Unhandled exception in topic (%s):\nmessage: %s\nexception:%s", self.topics, message, ex)
             return 0
 
 
