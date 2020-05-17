@@ -49,13 +49,13 @@ table = app.Table(
 #
 def stationColorAsStr(station):
     if station.red:
-        line = "red"
+        return "red"
     elif station.blue:
-        line = "blue"
+        return "blue"
     elif station.green:
-        line = "green"
+        return "green"
     else:
-        line = None
+        return None
 
 @app.agent(topic)
 async def process_stations(stations):
